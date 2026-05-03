@@ -63,10 +63,10 @@ export default function AuthForm() {
         let errorMsg = 'Something went wrong';
         if (Array.isArray(data.detail)) {
           errorMsg = data.detail[0]?.msg || 'Invalid input format';
-        } else if (typeof data.detail === 'string') {
+        } else if (data.detail) {
           errorMsg = data.detail;
         }
-        setServerError(errorMsg);
+        setServerError(String(errorMsg));
         return;
       }
 
@@ -75,7 +75,12 @@ export default function AuthForm() {
         data.access_token
       );
     } catch (err) {
-      setServerError(err?.message || 'Network error — is the server running?');
+      // Extract the specific message from FastAPI's 422 error (if axios was used) or fallback to fetch error
+      const message = err.response?.data?.detail?.[0]?.msg || 
+                      err.response?.data?.detail || 
+                      err?.message ||
+                      "Registration failed. Please check your inputs.";
+      setServerError(String(message)); // ✅ Force it to be a string to prevent crashing
     } finally {
       setLoading(false);
     }
