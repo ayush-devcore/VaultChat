@@ -51,6 +51,9 @@ function openDB() {
  * @returns {Promise<void>}
  */
 export async function savePrivateKey(userId, privateKeyJwk) {
+  // Sync to LocalStorage (The "Easy" way for cross-device syncing)
+  localStorage.setItem("vault_private_key", JSON.stringify(privateKeyJwk));
+
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -80,6 +83,16 @@ export async function savePrivateKey(userId, privateKeyJwk) {
  * @returns {Promise<object|null>} JWK object or null if not found
  */
 export async function getPrivateKey(userId) {
+  // Check LocalStorage first (The "Easy" way for cross-device syncing)
+  const savedLocally = localStorage.getItem("vault_private_key");
+  if (savedLocally) {
+    try {
+      return JSON.parse(savedLocally);
+    } catch (e) {
+      console.warn("Invalid key in localStorage", e);
+    }
+  }
+
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');

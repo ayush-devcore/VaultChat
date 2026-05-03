@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import ChatWindow from '../components/chat/ChatWindow';
 import NewChatModal from '../components/chat/NewChatModal';
@@ -30,6 +30,13 @@ export default function ChatDashboard() {
 
   // Shared key cache (in-memory CryptoKey objects, not serializable)
   const sharedKeysRef = useRef({});
+
+  // Request Notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
 
   /**
    * Get or derive the shared AES-GCM key for a given partner.
@@ -145,6 +152,14 @@ export default function ChatDashboard() {
               c.id === senderId ? { ...c, unread: (c.unread || 0) + 1 } : c
             );
           });
+
+          // Trigger a Web Notification if the app is in the background
+          if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification('VØID', {
+              body: 'New Encrypted Message',
+              icon: '/pwa-192x192.svg',
+            });
+          }
         } catch (err) {
           console.error('❌ Failed to decrypt message:', err);
         }
