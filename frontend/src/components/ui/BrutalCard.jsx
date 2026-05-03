@@ -17,9 +17,9 @@ export default function BrutalCard({
   };
 
   const shadowStyles = {
-    sm: 'shadow-[3px_3px_0px_#0A0A0A]',
-    md: 'shadow-[5px_5px_0px_#0A0A0A]',
-    lg: 'shadow-[8px_8px_0px_#0A0A0A]',
+    sm: 'shadow-[2px_2px_0px_#0A0A0A] md:shadow-[3px_3px_0px_#0A0A0A]',
+    md: 'shadow-[3px_3px_0px_#0A0A0A] md:shadow-[5px_5px_0px_#0A0A0A]',
+    lg: 'shadow-[4px_4px_0px_#0A0A0A] md:shadow-[8px_8px_0px_#0A0A0A]',
     none: 'shadow-none',
   };
 

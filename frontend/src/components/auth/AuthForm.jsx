@@ -133,7 +133,7 @@ export default function AuthForm() {
   return (
     <BrutalCard
       shadow="lg"
-      className="w-full max-w-md animate-[fadeIn_0.4s_ease-out]"
+      className="w-[92%] mx-auto md:w-full md:max-w-md animate-[fadeIn_0.4s_ease-out]"
     >
       {/* Tab Switcher */}
       <div className="flex border-b-3 border-vault-black mb-6">

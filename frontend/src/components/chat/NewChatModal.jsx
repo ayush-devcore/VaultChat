@@ -60,7 +60,7 @@ export default function NewChatModal({ isOpen, onClose, onStartChat }) {
       {/* Modal */}
       <BrutalCard
         shadow="lg"
-        className="relative z-10 w-full max-w-md mx-4 animate-[fadeIn_0.2s_ease-out]"
+        className="relative z-10 w-[92%] md:w-full md:max-w-md mx-auto md:mx-4 animate-[fadeIn_0.2s_ease-out]"
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-display text-xl font-black uppercase">

@@ -199,7 +199,7 @@ export default function ChatDashboard() {
   };
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
       <Sidebar
         contacts={contacts}
         activeContact={activeContact}
