@@ -60,7 +60,13 @@ export default function AuthForm() {
 
       const data = await res.json();
       if (!res.ok) {
-        setServerError(data.detail || 'Something went wrong');
+        let errorMsg = 'Something went wrong';
+        if (Array.isArray(data.detail)) {
+          errorMsg = data.detail[0]?.msg || 'Invalid input format';
+        } else if (typeof data.detail === 'string') {
+          errorMsg = data.detail;
+        }
+        setServerError(errorMsg);
         return;
       }
 
