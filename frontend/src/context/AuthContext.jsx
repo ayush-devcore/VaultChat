@@ -6,6 +6,7 @@ import {
   importPrivateKey,
 } from '../utils/crypto';
 import { savePrivateKey, getPrivateKey, clearAllKeys } from '../utils/storage';
+import { API_BASE_URL } from '../config';
 
 const AuthContext = createContext(null);
 
@@ -63,7 +64,7 @@ export function AuthProvider({ children }) {
 
       // Export public key and upload to server
       const publicKeyJwk = await exportPublicKey(keyPair.publicKey);
-      const res = await fetch('/api/users/keys', {
+      const res = await fetch(`${API_BASE_URL}/users/keys`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,6 +3,7 @@ import BrutalButton from '../ui/BrutalButton';
 import BrutalInput from '../ui/BrutalInput';
 import BrutalCard from '../ui/BrutalCard';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 /**
  * NewChatModal — Modal to start a new encrypted conversation.
@@ -29,7 +30,7 @@ export default function NewChatModal({ isOpen, onClose, onStartChat }) {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/users/search/${encodeURIComponent(username.trim())}`, {
+      const res = await fetch(`${API_BASE_URL}/users/search/${encodeURIComponent(username.trim())}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {

@@ -3,6 +3,7 @@ import BrutalButton from '../ui/BrutalButton';
 import BrutalInput from '../ui/BrutalInput';
 import BrutalCard from '../ui/BrutalCard';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 /**
  * AuthForm — Combined Login/Register form with Neo-Brutalist styling.
@@ -50,7 +51,7 @@ export default function AuthForm() {
         payload.avatar_base64 = formData.avatarBase64;
       }
 
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const endpoint = isLogin ? `${API_BASE_URL}/auth/login` : `${API_BASE_URL}/auth/register`;
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

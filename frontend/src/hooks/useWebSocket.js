@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { WS_BASE_URL } from '../config';
 
 /**
  * ═══════════════════════════════════════════════════════════════
@@ -11,8 +12,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
  *   - Auto-reconnects with exponential backoff
  *   - Exposes send() and onMessage callback
  */
-
-const WS_BASE = `ws://localhost:8000/ws`;
 
 /**
  * @param {string|null} token - JWT token for authentication
@@ -45,7 +44,7 @@ export default function useWebSocket(token, onMessage) {
     setStatus('connecting');
     console.log('🔌 WebSocket connecting...');
 
-    const ws = new WebSocket(`${WS_BASE}/${token}`);
+    const ws = new WebSocket(`${WS_BASE_URL}/${token}`);
     wsRef.current = ws;
 
     ws.onopen = () => {

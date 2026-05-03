@@ -12,6 +12,7 @@ import {
   decryptBinary,
 } from '../utils/crypto';
 import { getPrivateKey } from '../utils/storage';
+import { API_BASE_URL } from '../config';
 
 /**
  * ChatDashboard — Main chat interface.
@@ -49,7 +50,7 @@ export default function ChatDashboard() {
     // Fetch partner's public key from server (with retry for race conditions)
     let keyData = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
-      const res = await fetch(`/api/users/keys/${partnerId}`, {
+      const res = await fetch(`${API_BASE_URL}/users/keys/${partnerId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
