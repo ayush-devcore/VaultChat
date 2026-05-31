@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { AuthContext } from './AuthContextInstance';
 import {
   generateECDHKeyPair,
   exportPublicKey,
@@ -7,8 +8,6 @@ import {
 } from '../utils/crypto';
 import { savePrivateKey, getPrivateKey, clearAllKeys } from '../utils/storage';
 import { API_BASE_URL } from '../config';
-
-const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -143,10 +142,3 @@ export function AuthProvider({ children }) {
   );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}

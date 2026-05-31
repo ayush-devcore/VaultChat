@@ -2,7 +2,7 @@ import { useState } from 'react';
 import BrutalButton from '../ui/BrutalButton';
 import BrutalCard from '../ui/BrutalCard';
 import BrutalBadge from '../ui/BrutalBadge';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import {
   generateECDHKeyPair,
   exportPublicKey,

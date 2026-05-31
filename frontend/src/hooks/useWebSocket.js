@@ -31,7 +31,7 @@ export default function useWebSocket(token, onMessage) {
     onMessageRef.current = onMessage;
   }, [onMessage]);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(function connectWebSocket() {
     if (!token) return;
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
@@ -44,7 +44,13 @@ export default function useWebSocket(token, onMessage) {
     setStatus('connecting');
     console.log('🔌 WebSocket connecting...');
 
-    const ws = new WebSocket(`${WS_BASE_URL}/${token}`);
+    let deviceId = localStorage.getItem('vault_device_id');
+    if (!deviceId) {
+      deviceId = 'device_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('vault_device_id', deviceId);
+    }
+
+    const ws = new WebSocket(`${WS_BASE_URL}/${token}?device_id=${deviceId}`);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -77,7 +83,7 @@ export default function useWebSocket(token, onMessage) {
         const delay = Math.min(1000 * Math.pow(2, reconnectAttemptRef.current), 30000);
         reconnectAttemptRef.current++;
         console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttemptRef.current})...`);
-        reconnectTimerRef.current = setTimeout(connect, delay);
+        reconnectTimerRef.current = setTimeout(() => connectWebSocket(), delay);
       }
     };
 

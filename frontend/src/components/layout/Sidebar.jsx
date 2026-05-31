@@ -1,4 +1,4 @@
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import BrutalButton from '../ui/BrutalButton';
 import BrutalBadge from '../ui/BrutalBadge';
 

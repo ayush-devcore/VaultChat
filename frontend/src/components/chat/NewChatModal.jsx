@@ -2,7 +2,7 @@ import { useState } from 'react';
 import BrutalButton from '../ui/BrutalButton';
 import BrutalInput from '../ui/BrutalInput';
 import BrutalCard from '../ui/BrutalCard';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 import { API_BASE_URL } from '../../config';
 
 /**

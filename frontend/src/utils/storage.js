@@ -16,8 +16,9 @@
  */
 
 const DB_NAME = 'vaultchat-keys';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'keystore';
+const MSG_STORE_NAME = 'messages';
 
 // ── Database Connection ──────────────────────────────────────
 
@@ -33,6 +34,10 @@ function openDB() {
       const db = event.target.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(MSG_STORE_NAME)) {
+        const msgStore = db.createObjectStore(MSG_STORE_NAME, { keyPath: 'id' });
+        msgStore.createIndex('contactId', 'contactId', { unique: false });
       }
     };
 
@@ -194,15 +199,15 @@ export async function getSharedSecret(userId, partnerId) {
 }
 
 /**
- * Clear ALL stored keys (full wipe on logout).
+ * Clear ALL stored keys and messages (full wipe on logout).
  * @returns {Promise<void>}
  */
 export async function clearAllKeys() {
   const db = await openDB();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    store.clear();
+    const tx = db.transaction([STORE_NAME, MSG_STORE_NAME], 'readwrite');
+    tx.objectStore(STORE_NAME).clear();
+    tx.objectStore(MSG_STORE_NAME).clear();
 
     tx.oncomplete = () => {
       db.close();
@@ -211,6 +216,68 @@ export async function clearAllKeys() {
     tx.onerror = () => {
       db.close();
       reject(tx.error);
+    };
+  });
+}
+
+/**
+ * Save a message (sent or received) to IndexedDB.
+ * @param {string|number} userId - Current user's ID
+ * @param {string|number} contactId - Conversation partner's ID
+ * @param {object} msg - The message object
+ * @returns {Promise<void>}
+ */
+export async function saveLocalMessage(userId, contactId, msg) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(MSG_STORE_NAME, 'readwrite');
+    const store = tx.objectStore(MSG_STORE_NAME);
+
+    store.put({
+      ...msg,
+      id: msg.id || Date.now(),
+      userId: userId,
+      contactId: contactId,
+    });
+
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    tx.onerror = () => {
+      db.close();
+      reject(tx.error);
+    };
+  });
+}
+
+/**
+ * Retrieve all messages for a specific conversation from IndexedDB.
+ * @param {string|number} userId - Current user's ID
+ * @param {string|number} contactId - Conversation partner's ID
+ * @returns {Promise<Array>} List of messages
+ */
+export async function getLocalMessages(userId, contactId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(MSG_STORE_NAME, 'readonly');
+    const store = tx.objectStore(MSG_STORE_NAME);
+    const index = store.index('contactId');
+    const request = index.getAll(contactId);
+
+    request.onsuccess = () => {
+      db.close();
+      // Filter by current user just in case multiple users logged in
+      const filtered = (request.result || []).filter(
+        (m) => m.userId === userId
+      );
+      // Sort chronologically by timestamp/id
+      filtered.sort((a, b) => (a.id > b.id ? 1 : -1));
+      resolve(filtered);
+    };
+    request.onerror = () => {
+      db.close();
+      reject(request.error);
     };
   });
 }

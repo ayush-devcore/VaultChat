@@ -95,9 +95,13 @@ class MessageQueue(Base):
     receiver_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    device_id: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     encrypted_payload: Mapped[str] = mapped_column(Text, nullable=False)
     iv: Mapped[str] = mapped_column(String(64), nullable=True)
     message_type: Mapped[str] = mapped_column(String(20), default="TEXT", nullable=False)
+    ttl: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    file_mime: Mapped[str | None] = mapped_column(String(100), nullable=True)
     is_delivered: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -113,4 +117,31 @@ class MessageQueue(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<MessageQueue(id={self.id}, sender={self.sender_id}->receiver={self.receiver_id}, delivered={self.is_delivered})>"
+        return f"<MessageQueue(id={self.id}, sender={self.sender_id}->receiver={self.receiver_id}, device={self.device_id}, delivered={self.is_delivered})>"
+
+
+class UserDevice(Base):
+    """
+    Tracks registered/seen device IDs for each user to facilitate
+    multi-device E2EE offline queueing.
+    """
+
+    __tablename__ = "user_devices"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    device_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+    last_seen: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    def __repr__(self) -> str:
+        return f"<UserDevice(id={self.id}, user_id={self.user_id}, device_id='{self.device_id}')>"

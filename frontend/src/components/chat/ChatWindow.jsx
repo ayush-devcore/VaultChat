@@ -2,8 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import BrutalButton from '../ui/BrutalButton';
 import BrutalBadge from '../ui/BrutalBadge';
 import CryptoDebugger from './CryptoDebugger';
+import IncomingCallModal from './IncomingCallModal';
+import CallOverlay from './CallOverlay';
 import { encryptMessage, encryptBinary } from '../../utils/crypto';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
+import { saveLocalMessage } from '../../utils/storage';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
 
@@ -57,6 +60,7 @@ export default function ChatWindow({
   isConnected,
   getOrDeriveSharedKey,
   onlineUsers,
+  callManager,
 }) {
   const [messageInput, setMessageInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -69,6 +73,11 @@ export default function ChatWindow({
   const sharedKeyRef = useRef(null);
   const { user } = useAuth();
 
+  const resetKeyState = useCallback(() => {
+    setKeyReady(false);
+    setKeyError('');
+  }, []);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,13 +86,15 @@ export default function ChatWindow({
   // Derive shared key when active contact changes
   useEffect(() => {
     let cancelled = false;
-    setKeyReady(false);
-    setKeyError('');
     sharedKeyRef.current = null;
 
-    if (!activeContact) return;
-
     const init = async () => {
+      resetKeyState();
+
+      if (!activeContact) {
+        return;
+      }
+
       try {
         const key = await getOrDeriveSharedKey(activeContact.id);
         if (!cancelled) {
@@ -100,7 +111,7 @@ export default function ChatWindow({
 
     init();
     return () => { cancelled = true; };
-  }, [activeContact, getOrDeriveSharedKey]);
+  }, [activeContact, getOrDeriveSharedKey, resetKeyState]);
 
   // Remove expired self-destruct messages
   const handleExpire = useCallback((messageId) => {
@@ -143,6 +154,9 @@ export default function ChatWindow({
           messageType: 'TEXT',
           ttl: ttl,
         };
+
+        // Save sent message to local IndexedDB
+        await saveLocalMessage(user.id, activeContact.id, newMsg);
 
         setMessages((prev) => ({
           ...prev,
@@ -204,6 +218,9 @@ export default function ChatWindow({
           fileMime: file.type,
           ttl: ttl,
         };
+
+        // Save sent media message to local IndexedDB
+        await saveLocalMessage(user.id, activeContact.id, newMsg);
 
         setMessages((prev) => ({
           ...prev,
@@ -286,6 +303,36 @@ export default function ChatWindow({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Voice / Video Call Buttons */}
+          {activeContact && onlineUsers?.has(activeContact.id) && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => callManager?.initiateCall(activeContact, 'audio')}
+                disabled={!keyReady || !isConnected || callManager?.callState !== 'idle'}
+                className={`border-3 border-vault-black bg-white px-3 py-2 text-[10px] font-display font-bold uppercase transition-all duration-100 ${
+                  keyReady && isConnected && callManager?.callState === 'idle'
+                    ? 'hover:bg-vault-yellow cursor-pointer'
+                    : 'bg-vault-gray cursor-not-allowed opacity-50'
+                }`}
+              >
+                📞 Voice
+              </button>
+              <button
+                type="button"
+                onClick={() => callManager?.initiateCall(activeContact, 'video')}
+                disabled={!keyReady || !isConnected || callManager?.callState !== 'idle'}
+                className={`border-3 border-vault-black bg-white px-3 py-2 text-[10px] font-display font-bold uppercase transition-all duration-100 ${
+                  keyReady && isConnected && callManager?.callState === 'idle'
+                    ? 'hover:bg-vault-yellow cursor-pointer'
+                    : 'bg-vault-gray cursor-not-allowed opacity-50'
+                }`}
+              >
+                🎥 Video
+              </button>
+            </div>
+          )}
+
           {/* Self-Destruct Toggle */}
           <div className="flex items-center border-3 border-vault-black bg-white">
             {TTL_OPTIONS.map((opt) => (
@@ -476,6 +523,30 @@ export default function ChatWindow({
           {ttl ? '💀 VOID' : '🔒 SEND'}
         </BrutalButton>
       </form>
+
+      <IncomingCallModal
+        visible={callManager?.callState === 'incoming'}
+        contact={callManager?.callContact}
+        callType={callManager?.callType}
+        error={callManager?.callError}
+        onAccept={callManager?.acceptCall}
+        onReject={callManager?.rejectCall}
+      />
+
+      <CallOverlay
+        visible={callManager?.callState !== 'idle'}
+        state={callManager?.callState}
+        callType={callManager?.callType}
+        contact={callManager?.callContact}
+        duration={callManager?.callDuration}
+        remoteStream={callManager?.remoteStream}
+        muted={callManager?.muted}
+        videoEnabled={callManager?.videoEnabled}
+        error={callManager?.callError}
+        onHangUp={callManager?.hangUp}
+        onToggleMute={callManager?.toggleMute}
+        onToggleVideo={callManager?.toggleVideo}
+      />
     </div>
   );
 }
